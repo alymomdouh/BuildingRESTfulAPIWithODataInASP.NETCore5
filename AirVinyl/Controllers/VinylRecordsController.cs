@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OData.Routing.Controllers;
 using Microsoft.EntityFrameworkCore;
-using System;
+using System; 
 using System.Threading.Tasks;
 
 namespace AirVinyl.Controllers
@@ -35,6 +35,6 @@ namespace AirVinyl.Controllers
                 return NotFound();
             }
             return Ok(vinylRecord);
-        }
+        } 
     }
 }

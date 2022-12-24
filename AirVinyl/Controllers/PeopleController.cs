@@ -1,8 +1,11 @@
 ﻿using AirVinyl.API.DbContexts;
+using AirVinyl.API.Helpers;
+using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OData.Routing.Controllers;
 using Microsoft.EntityFrameworkCore;
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace AirVinyl.Controllers
@@ -30,6 +33,32 @@ namespace AirVinyl.Controllers
                 return NotFound();
             }
             return Ok(person);
+        }
+        [HttpGet("odata/People({key})/Email")]
+        [HttpGet("odata/People({key})/FirstName")]
+        [HttpGet("odata/People({key})/LastName")]
+        [HttpGet("odata/People({key})/DateOfBirth")]
+        [HttpGet("odata/People({key})/Gender")]
+        public async Task<IActionResult> GetPersonProperty(int key)
+        {
+            var person = await dbContext.People.FirstOrDefaultAsync(p => p.PersonId == key);
+            if (person == null)
+            {
+                return NotFound();
+            }
+            var propertyToGet = new Uri(HttpContext.Request.GetEncodedUrl()).Segments.Last();
+            // from AirVinyl.API.Helpers =>class PropertyValueHelpers
+            if (!person.HasProperty(propertyToGet))
+            {
+                return NotFound();
+            }
+            var propertyValue = person.GetValue(propertyToGet);
+            if (propertyValue == null)
+            {
+                // null = no content
+                return NoContent();
+            }
+            return Ok(propertyValue);
         }
     }
 }
