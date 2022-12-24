@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.IO;
+using System.Text.Json.Serialization;
 
 namespace AirVinyl.Entities
 {
@@ -8,8 +11,8 @@ namespace AirVinyl.Entities
     {
         [Key]
         public int PersonId { get; set; }
-        
-        [StringLength(100)]    
+
+        [StringLength(100)]
         public string Email { get; set; }
 
         [Required]
@@ -30,7 +33,24 @@ namespace AirVinyl.Entities
         public int NumberOfRecordsOnWishList { get; set; }
 
         public decimal AmountOfCashToSpend { get; set; }
+        [JsonIgnore]
+        public byte[] Photo { get; set; }
 
         public ICollection<VinylRecord> VinylRecords { get; set; } = new List<VinylRecord>();
+        [NotMapped]
+        public string Base64String
+        {
+            get
+            {
+                var base64Str = string.Empty;
+                using (var ms = new MemoryStream())
+                {
+                    int offset = 78;
+                    ms.Write(Photo, offset, Photo.Length - offset);
+                    base64Str = Convert.ToBase64String(ms.ToArray());
+                }
+                return base64Str;
+            }
+        }
     }
 }

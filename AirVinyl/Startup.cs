@@ -5,7 +5,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-
+using Microsoft.AspNetCore.OData;
+using AirVinyl.EntityDataModels;
+ 
 namespace AirVinyl
 {
     public class Startup
@@ -19,8 +21,8 @@ namespace AirVinyl
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
-        {
-            services.AddControllers();
+        { 
+            services.AddControllers().AddOData(opt => opt.AddRouteComponents("odata", ApplicationEntityDataModel.GetEdmModel()));
 
             services.AddDbContext<AirVinylDbContext>(options =>
             {
@@ -47,6 +49,6 @@ namespace AirVinyl
             {
                 endpoints.MapControllers();
             });
-        }
+        } 
     }
 }
