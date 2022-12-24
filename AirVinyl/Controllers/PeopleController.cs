@@ -61,5 +61,32 @@ namespace AirVinyl.Controllers
             }
             return Ok(propertyValue);
         }
+
+        [HttpGet("odata/People({key})/Email/$value")]
+        [HttpGet("odata/People({key})/FirstName/$value")]
+        [HttpGet("odata/People({key})/LastName/$value")]
+        [HttpGet("odata/People({key})/DateOfBirth/$value")]
+        [HttpGet("odata/People({key})/Gender/$value")]
+        public async Task<IActionResult> GetPersonPropertyRawValue(int key)
+        {
+            var person = await dbContext.People.FirstOrDefaultAsync(p => p.PersonId == key);
+            if (person == null)
+            {
+                return NotFound();
+            }
+            var url = HttpContext.Request.GetEncodedUrl();
+            var propertyToGet = new Uri(url).Segments[^2].TrimEnd('/');
+            if (!person.HasProperty(propertyToGet))
+            {
+                return NotFound();
+            }
+            var propertyValue = person.GetValue(propertyToGet);
+            if (propertyValue == null)
+            {
+                // null = no content
+                return NoContent();
+            }
+            return Ok(propertyValue.ToString());
+        }
     }
 }
