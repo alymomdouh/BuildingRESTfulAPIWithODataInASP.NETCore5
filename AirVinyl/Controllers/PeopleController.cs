@@ -34,6 +34,7 @@ namespace AirVinyl.Controllers
             }
             return Ok(person);
         }
+        //http://localhost:5000/odata/People(1)/Email
         [HttpGet("odata/People({key})/Email")]
         [HttpGet("odata/People({key})/FirstName")]
         [HttpGet("odata/People({key})/LastName")]
