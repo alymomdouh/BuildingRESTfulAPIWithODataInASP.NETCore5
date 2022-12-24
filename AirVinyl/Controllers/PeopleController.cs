@@ -62,6 +62,7 @@ namespace AirVinyl.Controllers
             return Ok(propertyValue);
         }
 
+        //get http://localhost:5000/odata/People(1)/Email/$value
         [HttpGet("odata/People({key})/Email/$value")]
         [HttpGet("odata/People({key})/FirstName/$value")]
         [HttpGet("odata/People({key})/LastName/$value")]
@@ -87,6 +88,23 @@ namespace AirVinyl.Controllers
                 return NoContent();
             }
             return Ok(propertyValue.ToString());
+        }
+
+        //get http://localhost:5000/odata/People(1)/VinylRecords
+        [HttpGet("odata/People({key})/VinylRecords")] // this for include navagation property 
+        public async Task<IActionResult> GetPersonCollectionProperty(int key)
+        {
+            var collectionPopertyToGet = new Uri(HttpContext.Request.GetEncodedUrl()).Segments.Last();
+            var person = await dbContext.People.Include(collectionPopertyToGet).FirstOrDefaultAsync(p => p.PersonId == key);
+            if (person == null)
+            {
+                return NotFound();
+            }
+            if (!person.HasProperty(collectionPopertyToGet))
+            {
+                return NotFound();
+            }
+            return Ok(person.GetValue(collectionPopertyToGet));
         }
     }
 }
