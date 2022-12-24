@@ -34,7 +34,8 @@ namespace AirVinyl.Entities
 
         public decimal AmountOfCashToSpend { get; set; }
         [JsonIgnore]
-        public byte[] Photo { get; set; }
+        [NotMapped]
+        public byte[]? Photo { get; set; }
 
         public ICollection<VinylRecord> VinylRecords { get; set; } = new List<VinylRecord>();
         [NotMapped]
@@ -43,11 +44,15 @@ namespace AirVinyl.Entities
             get
             {
                 var base64Str = string.Empty;
-                using (var ms = new MemoryStream())
+                if (Photo != null)
                 {
-                    int offset = 78;
-                    ms.Write(Photo, offset, Photo.Length - offset);
-                    base64Str = Convert.ToBase64String(ms.ToArray());
+                    using (var ms = new MemoryStream())
+                    {
+                        int offset = 78;
+                        ms.Write(Photo, offset, Photo.Length - offset);
+                        base64Str = Convert.ToBase64String(ms.ToArray());
+                    }
+                    return base64Str;
                 }
                 return base64Str;
             }
