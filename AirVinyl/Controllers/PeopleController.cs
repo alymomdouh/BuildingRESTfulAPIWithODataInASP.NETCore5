@@ -92,6 +92,8 @@ namespace AirVinyl.Controllers
 
         //get http://localhost:5000/odata/People(1)/VinylRecords
         [HttpGet("odata/People({key})/VinylRecords")] // this for include navagation property 
+        //[HttpGet("People({key})/Friends")]
+        //[HttpGet("People({key})/Addresses")]
         public async Task<IActionResult> GetPersonCollectionProperty(int key)
         {
             var collectionPopertyToGet = new Uri(HttpContext.Request.GetEncodedUrl()).Segments.Last();
