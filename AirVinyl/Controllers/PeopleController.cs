@@ -13,7 +13,7 @@ namespace AirVinyl.Controllers
 
         public PeopleController(AirVinylDbContext dbContext )
         {
-            this.dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext)); ;
+            this.dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext)); 
         }
         // #RequestInPostman  http://localhost:5000/odata/People
         public async Task<IActionResult> Get()
