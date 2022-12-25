@@ -4,6 +4,7 @@ using AirVinyl.Entities;
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OData.Deltas;
+using Microsoft.AspNetCore.OData.Query;
 using Microsoft.AspNetCore.OData.Routing.Controllers;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -21,6 +22,7 @@ namespace AirVinyl.Controllers
             this.dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
         }
         // #RequestInPostman  http://localhost:5000/odata/People
+        [EnableQuery]
         public async Task<IActionResult> Get()
         {
             return Ok(await dbContext.People.ToListAsync());
