@@ -136,7 +136,7 @@ namespace AirVinyl.Controllers
             }
             // add the person to the People collection
             await dbContext.People.AddAsync(person);
-            await dbContext.SaveChangesAsync(); 
+            await dbContext.SaveChangesAsync();
             // return the created person 
             return Created(person);
         }
@@ -161,8 +161,8 @@ namespace AirVinyl.Controllers
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
-            } 
-            var currentPerson = await dbContext.People.FirstOrDefaultAsync(p => p.PersonId == key); 
+            }
+            var currentPerson = await dbContext.People.FirstOrDefaultAsync(p => p.PersonId == key);
             if (currentPerson == null)
             {
                 return NotFound();
@@ -180,10 +180,10 @@ namespace AirVinyl.Controllers
                 //    return Created(person);
                 //}
 
-            } 
+            }
             person.PersonId = currentPerson.PersonId;
             dbContext.Entry(currentPerson).CurrentValues.SetValues(person);
-            await dbContext.SaveChangesAsync(); 
+            await dbContext.SaveChangesAsync();
             return NoContent();
         }
     }
