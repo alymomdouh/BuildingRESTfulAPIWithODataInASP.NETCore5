@@ -140,5 +140,51 @@ namespace AirVinyl.Controllers
             // return the created person 
             return Created(person);
         }
+        // put //http://localhost:5000/odata/People(3)
+        /*   // request like a create 
+         *  headers
+         *          Accept:application/json
+         *          Content-Type:application/json
+         * body row json 
+             {    
+                "FirstName": "Nick",
+                "LastName": "Missorten",
+                "DateOfBirth": "1983-05-18T00:00:00+02:00",
+                "Gender": "Male",
+                "NumberOfRecordsOnWishList": 23,
+                "AmountOfCashToSpend": 2500
+            }
+         */
+        [HttpPut("odata/People({key})")]
+        public async Task<IActionResult> UpdatePerson(int key, [FromBody] Person person)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            } 
+            var currentPerson = await dbContext.People.FirstOrDefaultAsync(p => p.PersonId == key); 
+            if (currentPerson == null)
+            {
+                return NotFound();
+
+                // Alternative: if the person isn't found: Upsert.  This must only
+                // be used if the responsibility for creating the key isn't at 
+                // server-level.  In our case, we're using auto-increment fields,
+                // so this isn't allowed - code is for illustration purposes only!
+                //if (currentPerson == null)
+                //{
+                //    // the key from the URI is the key we should use
+                //    person.PersonId = key;
+                //    _airVinylDbContext.People.Add(person);
+                //    await _airVinylDbContext.SaveChangesAsync();
+                //    return Created(person);
+                //}
+
+            } 
+            person.PersonId = currentPerson.PersonId;
+            dbContext.Entry(currentPerson).CurrentValues.SetValues(person);
+            await dbContext.SaveChangesAsync(); 
+            return NoContent();
+        }
     }
 }
