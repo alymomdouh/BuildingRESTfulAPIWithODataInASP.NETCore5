@@ -211,5 +211,18 @@ namespace AirVinyl.Controllers
             await dbContext.SaveChangesAsync(); 
             return NoContent();
         }
+
+        [HttpDelete("odata/People({key})")]
+        public async Task<IActionResult> DeleteOnePerson(int key)
+        {
+            var currentPerson = await dbContext.People.FirstOrDefaultAsync(p => p.PersonId == key); 
+            if (currentPerson == null)
+            {
+                return NotFound();
+            } 
+            dbContext.People.Remove(currentPerson);
+            await dbContext.SaveChangesAsync();
+            return NoContent();
+        }
     }
 }
