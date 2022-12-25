@@ -1,5 +1,6 @@
 ﻿using AirVinyl.API.DbContexts;
 using AirVinyl.API.Helpers;
+using AirVinyl.Entities;
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OData.Routing.Controllers;
@@ -107,6 +108,37 @@ namespace AirVinyl.Controllers
                 return NotFound();
             }
             return Ok(person.GetValue(collectionPopertyToGet));
+        }
+
+        /* data in post man 
+         * headers
+         *          Accept:application/json
+         *          Content-Type:application/json
+         * body 
+         *       row  json 
+         *                          {
+                                        "FirstName":"hussam",
+                                        "LastName":"Smith",
+                                        "Email": "hussam.smith@someprovider.com",    
+                                        "Gender":"Male",
+                                        "DateOfBirth": "1980-01-25",
+                                        "AmountOfCashToSpend":12.13,
+                                        "NumberOfRecordsOnWishList":15
+                                    } 
+         */
+
+        [HttpPost("odata/People")]
+        public async Task<IActionResult> CreatePerson([FromBody] Person person)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+            // add the person to the People collection
+            await dbContext.People.AddAsync(person);
+            await dbContext.SaveChangesAsync(); 
+            // return the created person 
+            return Created(person);
         }
     }
 }

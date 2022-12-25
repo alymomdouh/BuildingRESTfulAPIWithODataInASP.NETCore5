@@ -30,12 +30,12 @@ namespace AirVinyl.Entities
         [Required]
         public Gender Gender { get; set; }
 
-        public int NumberOfRecordsOnWishList { get; set; }
+        public int? NumberOfRecordsOnWishList { get; set; }
 
-        public decimal AmountOfCashToSpend { get; set; }
+        public decimal? AmountOfCashToSpend { get; set; }
         [JsonIgnore]
         [NotMapped]
-        public byte[]? Photo { get; set; }
+        public byte[] Photo { get; set; }
 
         public ICollection<VinylRecord> VinylRecords { get; set; } = new List<VinylRecord>();
         [NotMapped]
