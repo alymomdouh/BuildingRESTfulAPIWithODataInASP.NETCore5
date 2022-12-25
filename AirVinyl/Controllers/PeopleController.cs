@@ -22,13 +22,17 @@ namespace AirVinyl.Controllers
             this.dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
         }
         // #RequestInPostman  http://localhost:5000/odata/People
-        [EnableQuery]
+        [EnableQuery] // for enable select and work 
+        //get http://localhost:5000/odata/People?$select=Email
+        //get http://localhost:5000/odata/People?$select=Email,FirstName
         public async Task<IActionResult> Get()
         {
             return Ok(await dbContext.People.ToListAsync());
         }
         // People(1)
         //get http://localhost:5000/odata/People(1)
+        [EnableQuery] // for enable select and work only sebfic properties
+        //get http://localhost:5000/odata/People(1)?$select=Email,FirstName
         public async Task<IActionResult> Get(int key)
         {
             var person = await dbContext.People.FirstOrDefaultAsync(p => p.PersonId == key);
@@ -44,6 +48,8 @@ namespace AirVinyl.Controllers
         [HttpGet("odata/People({key})/LastName")]
         [HttpGet("odata/People({key})/DateOfBirth")]
         [HttpGet("odata/People({key})/Gender")]
+        [EnableQuery] // for enable select and work only sebfic properties
+        //get http://localhost:5000/odata/People(1)/VinylRecords?$select=Title
         public async Task<IActionResult> GetPersonProperty(int key)
         {
             var person = await dbContext.People.FirstOrDefaultAsync(p => p.PersonId == key);
@@ -98,6 +104,9 @@ namespace AirVinyl.Controllers
         [HttpGet("odata/People({key})/VinylRecords")] // this for include navagation property 
         //[HttpGet("People({key})/Friends")]
         //[HttpGet("People({key})/Addresses")]
+        //get http://localhost:5000/odata/People(1)/VinylRecords?$select=Title
+        [EnableQuery] // for enable select and work only sebfic properties
+        //
         public async Task<IActionResult> GetPersonCollectionProperty(int key)
         {
             var collectionPopertyToGet = new Uri(HttpContext.Request.GetEncodedUrl()).Segments.Last();
