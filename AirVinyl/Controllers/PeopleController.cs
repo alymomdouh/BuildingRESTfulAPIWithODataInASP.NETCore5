@@ -3,6 +3,7 @@ using AirVinyl.API.Helpers;
 using AirVinyl.Entities;
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.OData.Deltas;
 using Microsoft.AspNetCore.OData.Routing.Controllers;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -184,6 +185,30 @@ namespace AirVinyl.Controllers
             person.PersonId = currentPerson.PersonId;
             dbContext.Entry(currentPerson).CurrentValues.SetValues(person);
             await dbContext.SaveChangesAsync();
+            return NoContent();
+        }
+        //patch http://localhost:5000/odata/People(3)
+        /* headers a same preve request 
+         * body row json 
+         * {   
+                "FirstName": "Nick",
+                "Email": "nick@someprovider.com"
+            }
+         */
+        [HttpPatch("odata/People({key})")]
+        public async Task<IActionResult> PartiallyUpdatePerson(int key,[FromBody] Delta<Person> patch)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            } 
+            var currentPerson = await dbContext.People.FirstOrDefaultAsync(p => p.PersonId == key); 
+            if (currentPerson == null)
+            {
+                return NotFound();
+            } 
+            patch.Patch(currentPerson);
+            await dbContext.SaveChangesAsync(); 
             return NoContent();
         }
     }
