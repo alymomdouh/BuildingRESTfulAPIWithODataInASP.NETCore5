@@ -76,6 +76,13 @@ namespace AirVinyl.Controllers
         // get http://localhost:5000/odata/People?$filter=AmountOfCashToSpend add 1500 div 3 gt 600
         // get http://localhost:5000/odata/People?$filter=(AmountOfCashToSpend add 1500) div 3 gt 600
 
+        // test filter with canonical function (can combined multi function )
+        // get http://localhost:5000/odata/People?$filter=endswith(FirstName, 'n')
+        // get http://localhost:5000/odata/People?$filter=length(Email) eq 26
+        // get http://localhost:5000/odata/People?$filter=year(DateOfBirth) eq 1981
+        // get http://localhost:5000/odata/People?$filter=length(Email) eq 26 and endswith(FirstName, 'n')
+        // get 
+
         public async Task<IActionResult> Get()
         {
             return Ok(await dbContext.People.ToListAsync());
