@@ -22,7 +22,7 @@ namespace AirVinyl.Controllers
             this.dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
         }
         // #RequestInPostman  http://localhost:5000/odata/People
-        [EnableQuery] // for enable select and work 
+        //[EnableQuery] // for enable select and work 
         //get http://localhost:5000/odata/People?$select=Email
         //get http://localhost:5000/odata/People?$select=Email,FirstName
 
@@ -45,6 +45,17 @@ namespace AirVinyl.Controllers
         // get http://localhost:5000/odata/People?$orderby=Gender desc, Email desc&$expand=VinylRecords($orderby=Title)
         // merage order by with expand with select 
         // get http://localhost:5000/odata/People?$orderby=Gender desc, Email desc&$expand=VinylRecords($select=Title;$orderby=Title)
+        // test Paging
+        //get http://localhost:5000/odata/People?$top=2
+        //get http://localhost:5000/odata/People?$top=2&$skip=15    // this will fail 
+        //[EnableQuery(MaxTop =2,MaxSkip =2)]
+        [EnableQuery(MaxTop =2,MaxSkip =2,PageSize =4, MaxExpansionDepth = 2)]
+        // get http://localhost:5000/odata/People?$top=2
+        // get http://localhost:5000/odata/People?$top=5
+        // get http://localhost:5000/odata/People?$count=true    /// this will inculde counter 
+        // get http://localhost:5000/odata/People?$count=true&$skip=2   // this will include counter and skip 
+        // include count in multi layers 
+        // get http://localhost:5000/odata/People?$count=true&$expand=VinylRecords($count=true)
         public async Task<IActionResult> Get()
         {
             return Ok(await dbContext.People.ToListAsync());
