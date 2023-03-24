@@ -70,6 +70,12 @@ namespace AirVinyl.Controllers
         // get http://localhost:5000/odata/People?$filter=VinylRecords/any(vr:vr/Artist eq 'Arctic Monkeys')&$expand=VinylRecords
         // get http://localhost:5000/odata/People?$filter=VinylRecords/all(vr:vr/Artist eq 'Arctic Monkeys')&$expand=VinylRecords
 
+        // test filter arithmetic operator ==>  boolean condition
+        // get http://localhost:5000/odata/People?$filter=NumberOfRecordsOnWishList add 10 eq 20  ///that mean get all rows that make condition (((columnName)+10)==20)
+        // get http://localhost:5000/odata/People?$filter=AmountOfCashToSpend div NumberOfRecordsOnWishList gt 10
+        // get http://localhost:5000/odata/People?$filter=AmountOfCashToSpend add 1500 div 3 gt 600
+        // get http://localhost:5000/odata/People?$filter=(AmountOfCashToSpend add 1500) div 3 gt 600
+
         public async Task<IActionResult> Get()
         {
             return Ok(await dbContext.People.ToListAsync());
