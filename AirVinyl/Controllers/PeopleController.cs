@@ -25,6 +25,16 @@ namespace AirVinyl.Controllers
         [EnableQuery] // for enable select and work 
         //get http://localhost:5000/odata/People?$select=Email
         //get http://localhost:5000/odata/People?$select=Email,FirstName
+        //test with Expand
+        // get http://localhost:5000/odata/People?$expand=VinylRecords
+        //muilt layers Expand
+        // get http://localhost:5000/odata/People?$expand=VinylRecords($expand=PressingDetail)
+        //[EnableQuery(MaxExpansionDepth =1)]//this to not allowed to user make multi expand inside
+        // merge select with expand 
+        // get http://localhost:5000/odata/People?$select=Email,FirstName&$expand=VinylRecords
+        // get http://localhost:5000/odata/People?$select=Email,FirstName&$expand=VinylRecords($select=Title)
+        // get http://localhost:5000/odata/People?$select=Email,FirstName&$expand=VinylRecords($select=Title;$expand=PressingDetail($select=Grams))
+
         public async Task<IActionResult> Get()
         {
             return Ok(await dbContext.People.ToListAsync());
@@ -33,6 +43,8 @@ namespace AirVinyl.Controllers
         //get http://localhost:5000/odata/People(1)
         [EnableQuery] // for enable select and work only sebfic properties
         //get http://localhost:5000/odata/People(1)?$select=Email,FirstName
+        // expand
+        //get http://localhost:5000/odata/People(1)?$select=Email,FirstName&$expand=VinylRecords($select=Title)
         public async Task<IActionResult> Get(int key)
         {
             var person = await dbContext.People.FirstOrDefaultAsync(p => p.PersonId == key);
@@ -63,6 +75,7 @@ namespace AirVinyl.Controllers
             {
                 return NotFound();
             }
+            //return Ok(SingleResult.Create(person));
             var propertyValue = person.GetValue(propertyToGet);
             if (propertyValue == null)
             {
@@ -207,30 +220,30 @@ namespace AirVinyl.Controllers
             }
          */
         [HttpPatch("odata/People({key})")]
-        public async Task<IActionResult> PartiallyUpdatePerson(int key,[FromBody] Delta<Person> patch)
+        public async Task<IActionResult> PartiallyUpdatePerson(int key, [FromBody] Delta<Person> patch)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
-            } 
-            var currentPerson = await dbContext.People.FirstOrDefaultAsync(p => p.PersonId == key); 
+            }
+            var currentPerson = await dbContext.People.FirstOrDefaultAsync(p => p.PersonId == key);
             if (currentPerson == null)
             {
                 return NotFound();
-            } 
+            }
             patch.Patch(currentPerson);
-            await dbContext.SaveChangesAsync(); 
+            await dbContext.SaveChangesAsync();
             return NoContent();
         }
 
         [HttpDelete("odata/People({key})")]
         public async Task<IActionResult> DeleteOnePerson(int key)
         {
-            var currentPerson = await dbContext.People.FirstOrDefaultAsync(p => p.PersonId == key); 
+            var currentPerson = await dbContext.People.FirstOrDefaultAsync(p => p.PersonId == key);
             if (currentPerson == null)
             {
                 return NotFound();
-            } 
+            }
             dbContext.People.Remove(currentPerson);
             await dbContext.SaveChangesAsync();
             return NoContent();
