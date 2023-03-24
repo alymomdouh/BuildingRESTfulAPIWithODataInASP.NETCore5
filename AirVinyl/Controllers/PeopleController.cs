@@ -26,7 +26,6 @@ namespace AirVinyl.Controllers
         //get http://localhost:5000/odata/People?$select=Email
         //get http://localhost:5000/odata/People?$select=Email,FirstName
 
-
         //test with Expand
         // get http://localhost:5000/odata/People?$expand=VinylRecords
         //muilt layers Expand
@@ -36,7 +35,6 @@ namespace AirVinyl.Controllers
         // get http://localhost:5000/odata/People?$select=Email,FirstName&$expand=VinylRecords
         // get http://localhost:5000/odata/People?$select=Email,FirstName&$expand=VinylRecords($select=Title)
         // get http://localhost:5000/odata/People?$select=Email,FirstName&$expand=VinylRecords($select=Title;$expand=PressingDetail($select=Grams))
-
 
         // test order by default is asc
         // get http://localhost:5000/odata/People?$orderby=Email
@@ -59,6 +57,7 @@ namespace AirVinyl.Controllers
                       //get http://localhost:5000/odata/People(1)?$select=Email,FirstName&$expand=VinylRecords($select=Title)
                       // test order by default is asc
                       // get http://localhost:5000/odata/People(1)?$orderby=Gender desc, Email desc&$expand=VinylRecords($select=Title;$orderby=Title)
+                      //get http://localhost:5000/odata/People(1)?$expand=VinylRecords($select=Title;$orderby=Title)
 
         public async Task<IActionResult> Get(int key)
         {
