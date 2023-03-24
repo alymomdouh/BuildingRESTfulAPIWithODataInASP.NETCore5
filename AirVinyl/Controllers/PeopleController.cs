@@ -25,6 +25,8 @@ namespace AirVinyl.Controllers
         [EnableQuery] // for enable select and work 
         //get http://localhost:5000/odata/People?$select=Email
         //get http://localhost:5000/odata/People?$select=Email,FirstName
+
+
         //test with Expand
         // get http://localhost:5000/odata/People?$expand=VinylRecords
         //muilt layers Expand
@@ -35,6 +37,16 @@ namespace AirVinyl.Controllers
         // get http://localhost:5000/odata/People?$select=Email,FirstName&$expand=VinylRecords($select=Title)
         // get http://localhost:5000/odata/People?$select=Email,FirstName&$expand=VinylRecords($select=Title;$expand=PressingDetail($select=Grams))
 
+
+        // test order by default is asc
+        // get http://localhost:5000/odata/People?$orderby=Email
+        // get http://localhost:5000/odata/People?$orderby=Email desc
+        // get http://localhost:5000/odata/People?$orderby=Gender, Email
+        // get http://localhost:5000/odata/People?$orderby=Gender desc, Email
+        // merage order by with expand
+        // get http://localhost:5000/odata/People?$orderby=Gender desc, Email desc&$expand=VinylRecords($orderby=Title)
+        // merage order by with expand with select 
+        // get http://localhost:5000/odata/People?$orderby=Gender desc, Email desc&$expand=VinylRecords($select=Title;$orderby=Title)
         public async Task<IActionResult> Get()
         {
             return Ok(await dbContext.People.ToListAsync());
@@ -42,9 +54,12 @@ namespace AirVinyl.Controllers
         // People(1)
         //get http://localhost:5000/odata/People(1)
         [EnableQuery] // for enable select and work only sebfic properties
-        //get http://localhost:5000/odata/People(1)?$select=Email,FirstName
-        // expand
-        //get http://localhost:5000/odata/People(1)?$select=Email,FirstName&$expand=VinylRecords($select=Title)
+                      //get http://localhost:5000/odata/People(1)?$select=Email,FirstName
+                      // expand
+                      //get http://localhost:5000/odata/People(1)?$select=Email,FirstName&$expand=VinylRecords($select=Title)
+                      // test order by default is asc
+                      // get http://localhost:5000/odata/People(1)?$orderby=Gender desc, Email desc&$expand=VinylRecords($select=Title;$orderby=Title)
+
         public async Task<IActionResult> Get(int key)
         {
             var person = await dbContext.People.FirstOrDefaultAsync(p => p.PersonId == key);
