@@ -49,13 +49,27 @@ namespace AirVinyl.Controllers
         //get http://localhost:5000/odata/People?$top=2
         //get http://localhost:5000/odata/People?$top=2&$skip=15    // this will fail 
         //[EnableQuery(MaxTop =2,MaxSkip =2)]
-        [EnableQuery(MaxTop =2,MaxSkip =2,PageSize =4, MaxExpansionDepth = 2)]
+        [EnableQuery(MaxTop = 2, MaxSkip = 2, PageSize = 4, MaxExpansionDepth = 2)]
         // get http://localhost:5000/odata/People?$top=2
         // get http://localhost:5000/odata/People?$top=5
         // get http://localhost:5000/odata/People?$count=true    /// this will inculde counter 
         // get http://localhost:5000/odata/People?$count=true&$skip=2   // this will include counter and skip 
         // include count in multi layers 
         // get http://localhost:5000/odata/People?$count=true&$expand=VinylRecords($count=true)
+        // test filters 
+        // get http://localhost:5000/odata/People?$filter=FirstName eq 'Kevin'                           /// equal 
+        // get http://localhost:5000/odata/People?$filter=PersonId gt 3                                  /// greater than 
+        // get http://localhost:5000/odata/People?$filter=DateOfBirth le 1981-05-05T00:00:00Z            /// less than  
+        // get http://localhost:5000/odata/People?$filter=Gender eq AirVinyl.Gender'Female'       // this not working with me not know what is the erore
+        // get http://localhost:5000/odata/People?$filter=PersonId lt 3 and FirstName eq 'Kevin'
+        // get http://localhost:5000/odata/People?$filter=PersonId lt 3 or FirstName eq 'Kevin'
+        // merge 
+        // get http://localhost:5000/odata/People?$expand=VinylRecords($filter=Year ge 2000)
+        // get http://localhost:5000/odata/People?$expand=VinylRecords($filter=Year eq null)
+        // get http://localhost:5000/odata/People?$expand=VinylRecords($filter=PressingDetail/Grams ge 100)
+        // get http://localhost:5000/odata/People?$filter=VinylRecords/any(vr:vr/Artist eq 'Arctic Monkeys')&$expand=VinylRecords
+        // get http://localhost:5000/odata/People?$filter=VinylRecords/all(vr:vr/Artist eq 'Arctic Monkeys')&$expand=VinylRecords
+
         public async Task<IActionResult> Get()
         {
             return Ok(await dbContext.People.ToListAsync());
