@@ -1,5 +1,6 @@
 ﻿using AirVinyl.API.DbContexts;
 using AirVinyl.API.Helpers;
+using AirVinyl.Entities;
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OData.Formatter;
@@ -107,5 +108,60 @@ namespace AirVinyl.Controllers
                 .ToListAsync();
             return Ok(recordStores);
         }
+
+
+        // Post http://localhost:5000/odata/RecordStores(1)/AirVinyl.Actions.Rate
+        /*
+         { "personId": 4, "rating": 5}
+         */
+        [HttpPost("RecordStores({id})/AirVinyl.Actions.Rate")]
+        public async Task<IActionResult> Rate(int id, ODataActionParameters parameters)
+        {
+            // get the RecordStore
+            var recordStore = await _airVinylDbContext.RecordStores.FirstOrDefaultAsync(p => p.RecordStoreId == id);
+            if (recordStore == null)
+            {
+                return NotFound();
+            }
+            if (!parameters.TryGetValue("rating", out object outputFromDictionary))
+            {
+                return BadRequest();
+            }
+            if (!int.TryParse(outputFromDictionary.ToString(), out int rating))
+            {
+                return BadRequest();
+            }
+            if (!parameters.TryGetValue("personId", out outputFromDictionary))
+            {
+                return BadRequest();
+            }
+            if (!int.TryParse(outputFromDictionary.ToString(), out int personId))
+            {
+                return BadRequest();
+            }
+            // the person must exist
+            var person = await _airVinylDbContext.People.FirstOrDefaultAsync(p => p.PersonId == personId);
+            if (person == null)
+            {
+                return BadRequest();
+            }
+            // everything checks out, add the rating
+            recordStore.Ratings.Add(new Rating() { RatedBy = person, Value = rating });
+            // save changes 
+            if (await _airVinylDbContext.SaveChangesAsync() > 0)
+            {
+                // return true
+                return Ok(true);
+            }
+            else
+            {
+                // Something went wrong - we expect our 
+                // action to return false in that case.  
+                // The request is still successful, false
+                // is a valid response
+                return Ok(false);
+            }
+        }
+
     }
 }
