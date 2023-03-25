@@ -5,6 +5,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace AirVinyl.API.DbContexts
 {
@@ -418,6 +420,46 @@ namespace AirVinyl.API.DbContexts
                     Value = 4
                 }
             );
+        }
+        public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+        {
+            // we need unchanged values as well - the object dictionary isn't tracked
+            // by EF, thus changes to it will not be tracked either.
+            var modifiedOrAddedVinylRecords = ChangeTracker.Entries<VinylRecord>()
+                .Where(e => e.State == EntityState.Added
+                        || e.State == EntityState.Modified
+                        || e.State == EntityState.Unchanged).ToList();
+            for (var i = 0; i < modifiedOrAddedVinylRecords.Count; i++)
+            {
+                var vinylRecord = modifiedOrAddedVinylRecords[i];
+                // get the dynamic properties, and save them in a list
+                var dynamicProperties = new List<DynamicProperty>();
+                foreach (var dynamicPropertyKeyValue in vinylRecord.Entity.Properties)
+                {
+                    dynamicProperties
+                        .Add(new DynamicProperty()
+                        {
+                            Key = dynamicPropertyKeyValue.Key,
+                            Value = dynamicPropertyKeyValue.Value
+                        });
+                }
+                // remove the current dynamic property references (this does
+                // not remove the record itself!)
+                vinylRecord.Entity.DynamicVinylRecordProperties.Clear();
+                foreach (var dynamicPropertyToSave in dynamicProperties)
+                {
+                    // first, find & delete the actual record itself if it exists - this 
+                    // avoids duplicate key errors.
+                    var existingDynamicProperty = ChangeTracker.Entries<DynamicProperty>().FirstOrDefault(d => d.Entity.Key == dynamicPropertyToSave.Key);
+                    if (existingDynamicProperty != null)
+                    {
+                        DynamicVinylRecordProperties.Remove(existingDynamicProperty.Entity);
+                    }
+                    // add to the collection, so it's saved
+                    vinylRecord.Entity.DynamicVinylRecordProperties.Add(dynamicPropertyToSave);
+                }
+            }
+            return base.SaveChangesAsync(cancellationToken);
         }
     }
 }
