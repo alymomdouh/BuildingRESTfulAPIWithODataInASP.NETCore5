@@ -2,11 +2,13 @@
 using AirVinyl.API.Helpers;
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.OData.Formatter;
 using Microsoft.AspNetCore.OData.Query;
 using Microsoft.AspNetCore.OData.Results;
 using Microsoft.AspNetCore.OData.Routing.Controllers;
 using Microsoft.EntityFrameworkCore;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -79,6 +81,16 @@ namespace AirVinyl.Controllers
                     && (p.Ratings.Sum(r => r.Value) / p.Ratings.Count) >= minimumRating);
 
             return (recordStore != null);
+        }
+
+        [HttpGet("RecordStores/AirVinyl.Functions.AreRatedBy(personIds={people})")]
+        public async Task<IActionResult> AreRatedBy([FromODataUri] IEnumerable<int> people)
+        {
+            var recordStores = await _airVinylDbContext.RecordStores
+                .Where(p => p.Ratings.Any(r => people.Contains(r.RatedBy.PersonId)))
+                .ToListAsync();
+
+            return Ok(recordStores);
         }
     }
 }
