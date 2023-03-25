@@ -252,5 +252,35 @@ namespace AirVinyl.Controllers
                 return new StatusCodeResult(StatusCodes.Status500InternalServerError);
             }
         }
+
+
+        // get http://localhost:5000/odata/RecordStores/AirVinyl.SpecializedRecordStore
+        // get http://localhost:5000/odata/RecordStores/AirVinyl.SpecializedRecordStore?$filter=Specialization eq 'Indie'
+        [EnableQuery]
+        [HttpGet("RecordStores/AirVinyl.SpecializedRecordStore")]
+        public IActionResult GetSpecializedRecordStores()
+        {
+            var specializedStores = _airVinylDbContext.RecordStores
+                .Where(r => r is SpecializedRecordStore).ToList();
+            return Ok(specializedStores.Select(s => s as SpecializedRecordStore));
+        }
+
+        // get http://localhost:5000/odata/RecordStores(2)/AirVinyl.SpecializedRecordStore
+        // get http://localhost:5000/odata/RecordStores(2)/AirVinyl.SpecializedRecordStore?$select=Specialization
+        [EnableQuery]
+        [HttpGet("RecordStores({id})/AirVinyl.SpecializedRecordStore")]
+        public IActionResult GetSpecializedRecordStore(int id)
+        {
+            var specializedStore = _airVinylDbContext.RecordStores
+                .Where(r => r.RecordStoreId == id && r is SpecializedRecordStore);
+
+            if (!specializedStore.Any())
+            {
+                return NotFound();
+            }
+
+            return Ok(SingleResult.Create(specializedStore
+                .Select(s => s as SpecializedRecordStore)));
+        }
     }
 }
