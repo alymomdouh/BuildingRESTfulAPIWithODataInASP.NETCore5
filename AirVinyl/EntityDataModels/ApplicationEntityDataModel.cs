@@ -12,7 +12,8 @@ namespace AirVinyl.EntityDataModels
             builder.ContainerName = "AlyContainerName";
 
             builder.EntitySet<Person>("People");
-            builder.EntitySet<VinylRecord>("VinylRecords");
+           // builder.EntitySet<VinylRecord>("VinylRecords");
+            builder.EntitySet<RecordStore>("RecordStores");
             builder.EntityType<Person>().Ignore(r => r.Photo);
             builder.EntityType<Person>().Property(r => r.Base64String);
             return builder.GetEdmModel();

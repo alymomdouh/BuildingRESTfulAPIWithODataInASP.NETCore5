@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OData.Deltas;
 using Microsoft.AspNetCore.OData.Query;
+using Microsoft.AspNetCore.OData.Results;
 using Microsoft.AspNetCore.OData.Routing.Controllers;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -252,8 +253,8 @@ namespace AirVinyl.Controllers
                 //{
                 //    // the key from the URI is the key we should use
                 //    person.PersonId = key;
-                //    _airVinylDbContext.People.Add(person);
-                //    await _airVinylDbContext.SaveChangesAsync();
+                //    dbContext.People.Add(person);
+                //    await dbContext.SaveChangesAsync();
                 //    return Created(person);
                 //}
 
@@ -298,6 +299,234 @@ namespace AirVinyl.Controllers
             }
             dbContext.People.Remove(currentPerson);
             await dbContext.SaveChangesAsync();
+            return NoContent();
+        }
+
+        // get http://localhost:5000/odata/People(1)/VinylRecords
+
+        [HttpGet("odata/People({key})/VinylRecords")]
+        [EnableQuery]
+        public IActionResult GetVinylRecordsForPerson(int key)
+        {
+            var person = dbContext.People.FirstOrDefault(p => p.PersonId == key);
+            if (person == null)
+            {
+                return NotFound();
+            }
+            return Ok(dbContext.VinylRecords.Where(v => v.Person.PersonId == key));
+        }
+
+        // get http://localhost:5000/odata/People(1)/VinylRecords(1)
+
+        [HttpGet("odata/People({key})/VinylRecords({vinylRecordKey})")]
+        [EnableQuery]
+        public IActionResult GetVinylRecordForPerson(int key, int vinylRecordKey)
+        {
+            var person = dbContext.People.FirstOrDefault(p => p.PersonId == key);
+            if (person == null)
+            {
+                return NotFound();
+            }
+
+            var vinylRecord = dbContext.VinylRecords.Where(v => v.Person.PersonId == key
+                && v.VinylRecordId == vinylRecordKey);
+
+            if (!vinylRecord.Any())
+            {
+                return NotFound();
+            }
+
+            return Ok(SingleResult.Create(vinylRecord));
+        }
+
+        [HttpPost("odata/People")]
+        public async Task<IActionResult> CreatePerson1([FromBody] Person person)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            // add the person to the People collection
+            dbContext.People.Add(person);
+            await dbContext.SaveChangesAsync();
+
+            // return the created person 
+            return Created(person);
+        }
+
+        [HttpPut("odata/People({key})")]
+        public async Task<IActionResult> UpdatePerson1(int key, [FromBody] Person person)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var currentPerson = await dbContext.People
+              .FirstOrDefaultAsync(p => p.PersonId == key);
+
+            if (currentPerson == null)
+            {
+                return NotFound();
+
+                // Alternative: if the person isn't found: Upsert.  This must only
+                // be used if the responsibility for creating the key isn't at 
+                // server-level.  In our case, we're using auto-increment fields,
+                // so this isn't allowed - code is for illustration purposes only!
+                //if (currentPerson == null)
+                //{
+                //    // the key from the URI is the key we should use
+                //    person.PersonId = key;
+                //    dbContext.People.Add(person);
+                //    await dbContext.SaveChangesAsync();
+                //    return Created(person);
+                //}
+
+            }
+
+            person.PersonId = currentPerson.PersonId;
+            dbContext.Entry(currentPerson).CurrentValues.SetValues(person);
+            await dbContext.SaveChangesAsync();
+
+            return NoContent();
+        }
+
+
+         [HttpPatch("odata/People({key})")]
+        public async Task<IActionResult> PartiallyUpdatePerson1(int key, [FromBody] Delta<Person> patch)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var currentPerson = await dbContext.People.FirstOrDefaultAsync(p => p.PersonId == key);
+            if (currentPerson == null)
+            {
+                return NotFound();
+            }
+            patch.Patch(currentPerson);
+            await dbContext.SaveChangesAsync();
+            return NoContent();
+        }
+
+        [HttpDelete("odata/People({key})")]
+        public async Task<IActionResult> DeleteOnePerson1(int key)
+        {
+            var currentPerson = await dbContext.People.FirstOrDefaultAsync(p => p.PersonId == key);
+            if (currentPerson == null)
+            {
+                return NotFound();
+            }
+            dbContext.People.Remove(currentPerson);
+            await dbContext.SaveChangesAsync();
+            return NoContent();
+        }
+
+        // post http://localhost:5000/odata/People(1)/VinylRecords
+        /*
+         body 
+            {
+                  "Title": "Bleach",
+                  "Artist": "Nirvana",
+                  "CatalogNumber": "ARC/101",
+                  "Year": 1989,
+                  "PressingDetailId": 1
+            } 
+         */
+
+        [HttpPost("odata/People({key})/VinylRecords")]
+        public async Task<IActionResult> CreateVinylRecordForPerson(int key, [FromBody] VinylRecord vinylRecord)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+            // does the person exist?
+            var person = await dbContext.People
+                .FirstOrDefaultAsync(p => p.PersonId == key);
+            if (person == null)
+            {
+                return NotFound();
+            }
+            // link the person to the VinylRecord (also avoids an invalid person 
+            // key on the passed-in record - key from the URI wins)
+            vinylRecord.Person = person;
+            // add the VinylRecord
+            dbContext.VinylRecords.Add(vinylRecord);
+            await dbContext.SaveChangesAsync();
+            // return the created VinylRecord 
+            return Created(vinylRecord);
+        }
+
+        //patch http://localhost:5000/odata/People(1)/VinylRecords(1)
+        /*
+         * 
+               {
+                "Artist": "Nirvana updated" 
+                } 
+         */
+
+        [HttpPatch("odata/People({key})/VinylRecords({vinylRecordKey})")]
+        public async Task<IActionResult> PartiallyUpdateVinylRecordForPerson(int key, int vinylRecordKey, [FromBody] Delta<VinylRecord> patch)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            // does the person exist?
+            var person = await dbContext.People
+                .FirstOrDefaultAsync(p => p.PersonId == key);
+            if (person == null)
+            {
+                return NotFound();
+            }
+
+            // find a matching vinyl record  
+            var currentVinylRecord = await dbContext.VinylRecords
+                .FirstOrDefaultAsync(p => p.VinylRecordId == vinylRecordKey
+                && p.Person.PersonId == key);
+
+            // return NotFound if the VinylRecord isn't found
+            if (currentVinylRecord == null)
+            {
+                return NotFound();
+            }
+
+            // apply patch
+            patch.Patch(currentVinylRecord);
+            await dbContext.SaveChangesAsync();
+
+            return NoContent();
+        }
+
+        // delete http://localhost:5000/odata/People(1)/VinylRecords(6)   //DELETE VinylRecord for Person
+        [HttpDelete("odata/People({key})/VinylRecords({vinylRecordKey})")]
+        public async Task<IActionResult> DeleteVinylRecordForPerson(int key,int vinylRecordKey)
+        {
+            var currentPerson = await dbContext.People
+                .FirstOrDefaultAsync(p => p.PersonId == key);
+            if (currentPerson == null)
+            {
+                return NotFound();
+            }
+
+            // find a matching vinyl record  
+            var currentVinylRecord = await dbContext.VinylRecords
+                .FirstOrDefaultAsync(p => p.VinylRecordId == vinylRecordKey
+                && p.Person.PersonId == key);
+
+            if (currentVinylRecord == null)
+            {
+                return NotFound();
+            }
+
+            dbContext.VinylRecords.Remove(currentVinylRecord);
+            await dbContext.SaveChangesAsync();
+
+            // return No Content
             return NoContent();
         }
     }
