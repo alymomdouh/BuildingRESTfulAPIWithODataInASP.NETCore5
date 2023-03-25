@@ -83,13 +83,14 @@ namespace AirVinyl.Controllers
             return (recordStore != null);
         }
 
+        // this make function that take list of person Ids and return recordStores
+        // get http://localhost:5000/odata/RecordStores/AirVinyl.Functions.AreRatedBy(personIds=[1,2])
         [HttpGet("RecordStores/AirVinyl.Functions.AreRatedBy(personIds={people})")]
         public async Task<IActionResult> AreRatedBy([FromODataUri] IEnumerable<int> people)
         {
             var recordStores = await _airVinylDbContext.RecordStores
                 .Where(p => p.Ratings.Any(r => people.Contains(r.RatedBy.PersonId)))
                 .ToListAsync();
-
             return Ok(recordStores);
         }
     }
