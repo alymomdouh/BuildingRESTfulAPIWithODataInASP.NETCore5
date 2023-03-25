@@ -12,10 +12,18 @@ namespace AirVinyl.EntityDataModels
             builder.ContainerName = "AlyContainerName";
 
             builder.EntitySet<Person>("People");
-           // builder.EntitySet<VinylRecord>("VinylRecords");
+            // builder.EntitySet<VinylRecord>("VinylRecords");
             builder.EntitySet<RecordStore>("RecordStores");
             builder.EntityType<Person>().Ignore(r => r.Photo);
             builder.EntityType<Person>().Property(r => r.Base64String);
+
+            /// add functions
+            var isHighRatedFunction = builder.EntityType<RecordStore>().Function("IsHighRated");
+            isHighRatedFunction.Returns<bool>();
+            isHighRatedFunction.Parameter<int>("minimumRating");
+            isHighRatedFunction.Namespace = "AirVinyl.Functions";
+
+
             return builder.GetEdmModel();
         }
     }
