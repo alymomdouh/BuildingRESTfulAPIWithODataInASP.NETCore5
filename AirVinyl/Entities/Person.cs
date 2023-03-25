@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.OData.ModelBuilder;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -36,7 +37,7 @@ namespace AirVinyl.Entities
         [JsonIgnore]
         [NotMapped]
         public byte[] Photo { get; set; }
-
+        [Contained]
         public ICollection<VinylRecord> VinylRecords { get; set; } = new List<VinylRecord>();
         [NotMapped]
         public string Base64String
