@@ -3,6 +3,7 @@ using AirVinyl.EntityDataModels;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.OData;
+using Microsoft.AspNetCore.OData.Batch;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -23,7 +24,9 @@ namespace AirVinyl
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllers().AddOData(opt =>
-                                                         opt.AddRouteComponents("odata", ApplicationEntityDataModel.GetEdmModel())
+                                                         opt.AddRouteComponents("odata", ApplicationEntityDataModel.GetEdmModel(),
+                                                         new DefaultODataBatchHandler()
+                                                         )
                                                          .Select()
                                                          .Expand()
                                                          .OrderBy()
@@ -48,6 +51,8 @@ namespace AirVinyl
             }
 
             app.UseHttpsRedirection();
+
+            app.UseODataBatching();
 
             app.UseRouting();
 
