@@ -4,14 +4,16 @@ using AirVinyl.API.DbContexts;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace AirVinyl.Migrations
 {
     [DbContext(typeof(AirVinylDbContext))]
-    partial class AirVinylDbContextModelSnapshot : ModelSnapshot
+    [Migration("20230325124656_AddTableDynamicProperty")]
+    partial class AddTableDynamicProperty
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

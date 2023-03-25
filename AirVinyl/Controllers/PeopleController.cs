@@ -313,7 +313,8 @@ namespace AirVinyl.Controllers
             {
                 return NotFound();
             }
-            return Ok(dbContext.VinylRecords.Where(v => v.Person.PersonId == key));
+            //return Ok(dbContext.VinylRecords.Where(v => v.Person.PersonId == key));
+            return Ok(dbContext.VinylRecords.Include("DynamicVinylRecordProperties").Where(v => v.Person.PersonId == key));
         }
 
         // get http://localhost:5000/odata/People(1)/VinylRecords(1)
@@ -393,7 +394,7 @@ namespace AirVinyl.Controllers
         }
 
 
-         [HttpPatch("odata/People({key})")]
+        [HttpPatch("odata/People({key})")]
         public async Task<IActionResult> PartiallyUpdatePerson1(int key, [FromBody] Delta<Person> patch)
         {
             if (!ModelState.IsValid)
@@ -484,10 +485,12 @@ namespace AirVinyl.Controllers
                 return NotFound();
             }
 
-            // find a matching vinyl record  
+            // find a matching vinyl record
+            // var currentVinylRecord = await dbContext.VinylRecords.FirstOrDefaultAsync(p => p.VinylRecordId == vinylRecordKey&& p.Person.PersonId == key);
+
             var currentVinylRecord = await dbContext.VinylRecords
-                .FirstOrDefaultAsync(p => p.VinylRecordId == vinylRecordKey
-                && p.Person.PersonId == key);
+                .Include("DynamicVinylRecordProperties")
+                .FirstOrDefaultAsync(p => p.VinylRecordId == vinylRecordKey && p.Person.PersonId == key);
 
             // return NotFound if the VinylRecord isn't found
             if (currentVinylRecord == null)
@@ -504,7 +507,7 @@ namespace AirVinyl.Controllers
 
         // delete http://localhost:5000/odata/People(1)/VinylRecords(6)   //DELETE VinylRecord for Person
         [HttpDelete("odata/People({key})/VinylRecords({vinylRecordKey})")]
-        public async Task<IActionResult> DeleteVinylRecordForPerson(int key,int vinylRecordKey)
+        public async Task<IActionResult> DeleteVinylRecordForPerson(int key, int vinylRecordKey)
         {
             var currentPerson = await dbContext.People
                 .FirstOrDefaultAsync(p => p.PersonId == key);

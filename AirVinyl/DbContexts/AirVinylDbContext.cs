@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace AirVinyl.API.DbContexts
@@ -15,14 +16,25 @@ namespace AirVinyl.API.DbContexts
         public DbSet<VinylRecord> VinylRecords { get; set; }
         public DbSet<RecordStore> RecordStores { get; set; }
         public DbSet<PressingDetail> PressingDetails { get; set; }
+        public DbSet<DynamicProperty> DynamicVinylRecordProperties { get; set; }
 
         public AirVinylDbContext(DbContextOptions<AirVinylDbContext> options)
            : base(options)
-        { 
+        {
         }
-         
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder.Entity<DynamicProperty>().HasKey(d => new { d.Key, d.VinylRecordId });
+
+            modelBuilder.Entity<DynamicProperty>().HasData(
+               new DynamicProperty()
+               {
+                   VinylRecordId = 1,
+                   Key = "Publisher",
+                   Value = "Geffen"
+               });
+
             modelBuilder.Entity<PressingDetail>().HasData(
                 new PressingDetail()
                 {
@@ -98,7 +110,7 @@ namespace AirVinyl.API.DbContexts
                     LastName = "Missorten",
                     Gender = Gender.Male,
                     NumberOfRecordsOnWishList = 23,
-                    AmountOfCashToSpend = 2500 
+                    AmountOfCashToSpend = 2500
                 },
                 new Person()
                 {
@@ -110,7 +122,7 @@ namespace AirVinyl.API.DbContexts
                     Gender = Gender.Male,
                     NumberOfRecordsOnWishList = 19,
                     AmountOfCashToSpend = 90
-                },                
+                },
                 new Person()
                 {
                     PersonId = 6,
@@ -120,7 +132,7 @@ namespace AirVinyl.API.DbContexts
                     LastName = "Mills",
                     Gender = Gender.Male,
                     NumberOfRecordsOnWishList = 98,
-                    AmountOfCashToSpend = 200 
+                    AmountOfCashToSpend = 200
                 }
             );
 
@@ -142,7 +154,7 @@ namespace AirVinyl.API.DbContexts
                     Artist = "Arctic Monkeys",
                     Title = "AM",
                     CatalogNumber = "EUI/111",
-                    PressingDetailId =  2,
+                    PressingDetailId = 2,
                     Year = 2013
                 },
                 new VinylRecord()
@@ -316,7 +328,7 @@ namespace AirVinyl.API.DbContexts
                      Specialization = "Rock"
                  });
 
-                c.OwnsOne(r => r.StoreAddress).HasData(                  
+                c.OwnsOne(r => r.StoreAddress).HasData(
                   new Address()
                   {
                       RecordStoreId = 2,
@@ -335,7 +347,7 @@ namespace AirVinyl.API.DbContexts
                   }
               );
             });
-             
+
             modelBuilder.Entity<RecordStore>(c =>
             {
                 c.HasData(new RecordStore()
@@ -353,15 +365,15 @@ namespace AirVinyl.API.DbContexts
                        PostalCode = "2000",
                        Street = "25, Fluffy Road",
                        Country = "Belgium"
-                   } 
+                   }
               );
-            });              
+            });
 
             modelBuilder.Entity<Rating>().HasData(
                 new Rating()
-                {    
+                {
                     RatingId = 1,
-                    RecordStoreId = 1, 
+                    RecordStoreId = 1,
                     RatedByPersonId = 1,
                     Value = 4
                 },
@@ -408,6 +420,46 @@ namespace AirVinyl.API.DbContexts
                     Value = 4
                 }
             );
-        }    
+        }
+        public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+        {
+            // we need unchanged values as well - the object dictionary isn't tracked
+            // by EF, thus changes to it will not be tracked either.
+            var modifiedOrAddedVinylRecords = ChangeTracker.Entries<VinylRecord>()
+                .Where(e => e.State == EntityState.Added
+                        || e.State == EntityState.Modified
+                        || e.State == EntityState.Unchanged).ToList();
+            for (var i = 0; i < modifiedOrAddedVinylRecords.Count; i++)
+            {
+                var vinylRecord = modifiedOrAddedVinylRecords[i];
+                // get the dynamic properties, and save them in a list
+                var dynamicProperties = new List<DynamicProperty>();
+                foreach (var dynamicPropertyKeyValue in vinylRecord.Entity.Properties)
+                {
+                    dynamicProperties
+                        .Add(new DynamicProperty()
+                        {
+                            Key = dynamicPropertyKeyValue.Key,
+                            Value = dynamicPropertyKeyValue.Value
+                        });
+                }
+                // remove the current dynamic property references (this does
+                // not remove the record itself!)
+                vinylRecord.Entity.DynamicVinylRecordProperties.Clear();
+                foreach (var dynamicPropertyToSave in dynamicProperties)
+                {
+                    // first, find & delete the actual record itself if it exists - this 
+                    // avoids duplicate key errors.
+                    var existingDynamicProperty = ChangeTracker.Entries<DynamicProperty>().FirstOrDefault(d => d.Entity.Key == dynamicPropertyToSave.Key);
+                    if (existingDynamicProperty != null)
+                    {
+                        DynamicVinylRecordProperties.Remove(existingDynamicProperty.Entity);
+                    }
+                    // add to the collection, so it's saved
+                    vinylRecord.Entity.DynamicVinylRecordProperties.Add(dynamicPropertyToSave);
+                }
+            }
+            return base.SaveChangesAsync(cancellationToken);
+        }
     }
 }

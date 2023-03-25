@@ -4,6 +4,7 @@ using AirVinyl.Entities;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.OData.Deltas;
 using Microsoft.AspNetCore.OData.Formatter;
 using Microsoft.AspNetCore.OData.Query;
 using Microsoft.AspNetCore.OData.Results;
@@ -252,5 +253,115 @@ namespace AirVinyl.Controllers
                 return new StatusCodeResult(StatusCodes.Status500InternalServerError);
             }
         }
+
+
+        // get http://localhost:5000/odata/RecordStores/AirVinyl.SpecializedRecordStore
+        // get http://localhost:5000/odata/RecordStores/AirVinyl.SpecializedRecordStore?$filter=Specialization eq 'Indie'
+        [EnableQuery]
+        [HttpGet("RecordStores/AirVinyl.SpecializedRecordStore")]
+        public IActionResult GetSpecializedRecordStores()
+        {
+            var specializedStores = _airVinylDbContext.RecordStores
+                .Where(r => r is SpecializedRecordStore).ToList();
+            return Ok(specializedStores.Select(s => s as SpecializedRecordStore));
+        }
+
+        // get http://localhost:5000/odata/RecordStores(2)/AirVinyl.SpecializedRecordStore
+        // get http://localhost:5000/odata/RecordStores(2)/AirVinyl.SpecializedRecordStore?$select=Specialization
+        [EnableQuery]
+        [HttpGet("RecordStores({id})/AirVinyl.SpecializedRecordStore")]
+        public IActionResult GetSpecializedRecordStore(int id)
+        {
+            var specializedStore = _airVinylDbContext.RecordStores
+                .Where(r => r.RecordStoreId == id && r is SpecializedRecordStore);
+
+            if (!specializedStore.Any())
+            {
+                return NotFound();
+            }
+
+            return Ok(SingleResult.Create(specializedStore
+                .Select(s => s as SpecializedRecordStore)));
+        }
+
+        // post http://localhost:5000/odata/RecordStores
+        /*
+             {
+                "Name": "New Regular Store"
+             } 
+        /// ******************************** 
+             {
+                "Name": "New Specialized Store",
+                "Specialization": "Pop"
+             }
+        /// ******************************** 
+                {
+                    "@odata.type": "#AirVinyl.SpecializedRecordStore",
+                    "Name": "New Specialized Store",
+                    "Specialization": "Pop"
+                }
+         */
+
+        [HttpPost("RecordStores")]
+        public async Task<IActionResult> CreateRecordStore([FromBody] RecordStore recordStore)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+            // add the RecordStore
+            _airVinylDbContext.RecordStores.Add(recordStore);
+            await _airVinylDbContext.SaveChangesAsync();
+            // return the created RecordStore 
+            return Created(recordStore);
+        }
+
+
+        // patch http://localhost:5000/odata/RecordStores(2)/AirVinyl.SpecializedRecordStore
+        /*
+             {
+              "@odata.type": "#AirVinyl.SpecializedRecordStore",
+              "Specialization": "Metal"
+            }
+         */
+        [HttpPatch("RecordStores({key})")]
+        [HttpPatch("RecordStores({key})/AirVinyl.SpecializedRecordStore")]
+        public async Task<IActionResult> UpdateRecordStorePartially(int key, [FromBody] Delta<RecordStore> patch)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+            // find a matching record store
+            var currentRecordStore = await _airVinylDbContext.RecordStores.FirstOrDefaultAsync(p => p.RecordStoreId == key);
+            // if the record store isn't found, return NotFound
+            if (currentRecordStore == null)
+            {
+                return NotFound();
+            }
+            patch.Patch(currentRecordStore);
+            await _airVinylDbContext.SaveChangesAsync();
+            return NoContent();
+        }
+
+        // delete http://localhost:5000/odata/RecordStores(2)/AirVinyl.SpecializedRecordStore
+        /*
+         
+         */
+        [HttpDelete("RecordStores({key})")]
+        [HttpDelete("RecordStores({key})/AirVinyl.SpecializedRecordStore")]
+        public async Task<IActionResult> DeleteRecordStore(int key)
+        {
+            var currentRecordStore = await _airVinylDbContext.RecordStores.Include("Ratings").FirstOrDefaultAsync(p => p.RecordStoreId == key);
+            if (currentRecordStore == null)
+            {
+                return NotFound();
+            }
+            currentRecordStore.Ratings.Clear();
+            _airVinylDbContext.RecordStores.Remove(currentRecordStore);
+            await _airVinylDbContext.SaveChangesAsync();
+            return NoContent();
+        }
+
     }
 }
